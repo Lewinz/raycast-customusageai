@@ -1,0 +1,76 @@
+{
+  "name": "custom-usage-ai",
+  "title": "CustomUsageAI",
+  "description": "A Raycast extension for custom AI model interactions",
+  "icon": "command-icon.png",
+  "author": "你的名字",
+  "categories": ["Productivity", "Developer Tools"],
+  "license": "MIT",
+  "commands": [
+    {
+      "name": "manage-templates",
+      "title": "Manage Templates",
+      "description": "Create, edit, and delete prompt templates. Templates can be sorted by usage count and support variables.",
+      "mode": "view"
+    },
+    {
+      "name": "use-template",
+      "title": "Use Template",
+      "description": "Quick access to your templates. Search, select and use templates with AI. Supports continuous conversations.",
+      "mode": "view"
+    },
+    {
+      "name": "use-with-clipboard",
+      "title": "Use Template with Clipboard",
+      "description": "Use template with current clipboard content. Quick way to process copied text with AI.",
+      "mode": "view"
+    }
+  ],
+  "preferences": [
+    {
+      "name": "apiHost",
+      "title": "API Host",
+      "description": "Custom API host for OpenAI compatible API",
+      "type": "textfield",
+      "required": true
+    },
+    {
+      "name": "modelName",
+      "title": "Model Name",
+      "description": "Name of the AI model to use",
+      "type": "textfield",
+      "required": true
+    },
+    {
+      "name": "apiKey",
+      "title": "API Key",
+      "description": "API key for authentication",
+      "type": "password",
+      "required": true
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "^1.55.2",
+    "node-fetch": "^3.3.0",
+    "react": "18.2.0"
+  },
+  "devDependencies": {
+    "@raycast/utils": "^1.9.0",
+    "@types/node": "18.8.3",
+    "@types/react": "18.0.9",
+    "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "@typescript-eslint/parser": "^5.0.0",
+    "eslint": "^7.32.0",
+    "eslint-config-prettier": "^8.3.0",
+    "prettier": "^2.5.1",
+    "typescript": "^4.4.3"
+  },
+  "scripts": {
+    "build": "ray build -e dist",
+    "dev": "ray develop",
+    "fix-lint": "ray lint --fix",
+    "lint": "ray lint",
+    "publish": "npx @raycast/api@latest publish",
+    "update-commands": "ts-node scripts/update-commands.ts"
+  }
+} 
