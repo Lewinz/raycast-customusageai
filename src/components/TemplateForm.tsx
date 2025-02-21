@@ -1,8 +1,7 @@
 import React from "react";
-import { Form, ActionPanel, Action, LocalStorage } from "@raycast/api";
+import { Form, ActionPanel, Action, LocalStorage, showToast, Toast, useNavigation } from "@raycast/api";
 import { useState } from "react";
 import { Template } from "../types";
-import fs from "fs";
 
 interface TemplateFormProps {
   template?: Template;
@@ -12,31 +11,47 @@ interface TemplateFormProps {
 export function TemplateForm({ template, onSave }: TemplateFormProps) {
   const [name, setName] = useState(template?.name ?? "");
   const [content, setContent] = useState(template?.content ?? "");
+  const { pop } = useNavigation();
 
   async function handleSubmit() {
-    const savedTemplates = await LocalStorage.getItem<string>("templates");
-    const templates = savedTemplates ? JSON.parse(savedTemplates) : [];
-    
-    if (template) {
-      const index = templates.findIndex((t: Template) => t.id === template.id);
-      templates[index] = { ...template, name, content, useCount: template.useCount };
-    } else {
-      templates.push({
-        id: Date.now().toString(),
-        name,
-        content,
-        useCount: 0
+    try {
+      if (!name || !content) {
+        await showToast({ 
+          title: "请填写所有字段", 
+          style: Toast.Style.Failure 
+        });
+        return;
+      }
+
+      const savedTemplates = await LocalStorage.getItem<string>("templates");
+      const templates = savedTemplates ? JSON.parse(savedTemplates) : [];
+      
+      if (template) {
+        const index = templates.findIndex((t: Template) => t.id === template.id);
+        templates[index] = { ...template, name, content, useCount: template.useCount };
+      } else {
+        templates.push({
+          id: Date.now().toString(),
+          name,
+          content,
+          useCount: 0
+        });
+      }
+      
+      await LocalStorage.setItem("templates", JSON.stringify(templates));
+      await showToast({ 
+        title: "保存成功", 
+        style: Toast.Style.Success 
+      });
+      await onSave();
+      pop();
+    } catch (error) {
+      console.error(error);
+      await showToast({ 
+        title: "保存失败", 
+        style: Toast.Style.Failure 
       });
     }
-    
-    // 保存到 LocalStorage
-    await LocalStorage.setItem("templates", JSON.stringify(templates));
-    
-    // 同时保存到文件系统
-    const templatesPath = ".raycast/templates.json";
-    fs.writeFileSync(templatesPath, JSON.stringify(templates, null, 2));
-    
-    onSave();
   }
 
   return (

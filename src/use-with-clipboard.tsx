@@ -69,7 +69,6 @@ export default function Command() {
               <Action.Push
                 title="Use"
                 target={<ChatView template={template} initialInput={clipboardContent} />}
-                shortcut={{ modifiers: ["cmd"], key: "enter" }}
               />
             </ActionPanel>
           }

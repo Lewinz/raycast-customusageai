@@ -1,13 +1,15 @@
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
+import { getPreferenceValues, LocalStorage } from "@raycast/api";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function updateCommands() {
   try {
-    // 读取本地存储的模板文件
-    const templatesPath = path.join(__dirname, "../.raycast/templates.json");
-    const templates = fs.existsSync(templatesPath) 
-      ? JSON.parse(fs.readFileSync(templatesPath, "utf-8"))
-      : [];
+    // 从 LocalStorage 读取模板
+    const savedTemplates = await LocalStorage.getItem<string>("templates");
+    const templates = savedTemplates ? JSON.parse(savedTemplates) : [];
     
     const packagePath = path.join(__dirname, "../package.json");
     const pkg = JSON.parse(fs.readFileSync(packagePath, "utf-8"));

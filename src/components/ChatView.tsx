@@ -1,5 +1,5 @@
 import React from "react";
-import { Form, ActionPanel, Action, getPreferenceValues, LocalStorage } from "@raycast/api";
+import { Form, ActionPanel, Action, getPreferenceValues, LocalStorage, showToast, Toast } from "@raycast/api";
 import { useState } from "react";
 import fetch from "node-fetch";
 import { Template, ChatMessage, Preferences, APIResponse } from "../types";
@@ -12,9 +12,18 @@ interface ChatViewProps {
 export function ChatView({ template, initialInput }: ChatViewProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState(initialInput || "");
+  const [isLoading, setIsLoading] = useState(false);
   const preferences = getPreferenceValues<Preferences>();
 
   async function handleSubmit() {
+    if (!input.trim()) {
+      await showToast({ title: "请输入内容", style: Toast.Style.Failure });
+      return;
+    }
+
+    setIsLoading(true);
+    await showToast({ title: "正在请求 AI...", style: Toast.Style.Animated });
+
     // 更新使用次数
     const savedTemplates = await LocalStorage.getItem<string>("templates");
     if (savedTemplates) {
@@ -26,9 +35,11 @@ export function ChatView({ template, initialInput }: ChatViewProps) {
       }
     }
 
+    const userMessage = input;
     const prompt = template.content.replace("{input}", input);
-    const newMessages = [...messages, { role: "user", content: prompt }];
+    const newMessages = [...messages, { role: "user", content: userMessage }];
     setMessages(newMessages);
+    setInput("");
     
     try {
       const response = await fetch(`${preferences.apiHost}/chat/completions`, {
@@ -39,7 +50,7 @@ export function ChatView({ template, initialInput }: ChatViewProps) {
         },
         body: JSON.stringify({
           model: preferences.modelName,
-          messages: [{ role: "user", content: prompt }],  // 只发送当前消息
+          messages: [{ role: "user", content: prompt }],
         }),
       });
       
@@ -52,39 +63,64 @@ export function ChatView({ template, initialInput }: ChatViewProps) {
         role: "assistant", 
         content: data.choices[0].message.content 
       }]);
+      await showToast({ title: "AI 响应成功", style: Toast.Style.Success });
     } catch (error) {
       console.error("API request failed:", error);
-      // 可以添加错误提示
       setMessages([...newMessages, { 
         role: "assistant", 
         content: "Error: Failed to get response from AI. Please check your API settings." 
       }]);
+      await showToast({ title: "AI 请求失败", style: Toast.Style.Failure });
+    } finally {
+      setIsLoading(false);
     }
-    
-    setInput("");
   }
 
   return (
     <Form
       actions={
         <ActionPanel>
-          <Action.SubmitForm title="Send" onSubmit={handleSubmit}/></ActionPanel>
-      }>
+          <Action.SubmitForm
+            title="Send"
+            onSubmit={handleSubmit}
+            disabled={isLoading}
+          />
+        </ActionPanel>
+      }
+    >
       <Form.TextArea
         id="input"
-        title="Input"
+        title={`Using Template: ${template.name}`}
         placeholder="Enter your content here..."
         value={input}
         onChange={setInput}
         autoFocus
+        disabled={isLoading}
       />
       {messages.map((message, index) => (
-        <Form.Description
-          key={index}
-          title={message.role === "user" ? "You" : "AI"}
-          text={message.content}
-        />
+        message.role === "user" ? (
+          <Form.Description
+            key={index}
+            title="Input"
+            text={message.content}
+          />
+        ) : (
+          <Form.TextArea
+            key={index}
+            id={`message-${index}`}
+            title="AI Response"
+            defaultValue={message.content}
+            readOnly
+            autoHeight
+          />
+        )
       ))}
+      {isLoading && (
+        <Form.Description
+          title="Status"
+          text="AI is thinking..."
+        />
+      )}
     </Form>
   );
 } 

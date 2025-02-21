@@ -31,6 +31,15 @@ export default function Command() {
       const templates = JSON.parse(savedTemplates);
       templates.sort((a: Template, b: Template) => (b.useCount || 0) - (a.useCount || 0));
       setTemplates(templates);
+      
+      // 同步到文件系统
+      const fs = require('fs');
+      const path = require('path');
+      const raycastDir = path.join(__dirname, "../.raycast");
+      if (!fs.existsSync(raycastDir)) {
+        fs.mkdirSync(raycastDir);
+      }
+      fs.writeFileSync(path.join(raycastDir, "templates.json"), savedTemplates);
     }
   }
 
@@ -43,8 +52,7 @@ export default function Command() {
       title: "Delete Template",
       message: `Are you sure to delete template "${template.name}"?`,
       primaryAction: {
-        title: "Delete",
-        style: Action.Style.Destructive,
+        title: "Delete"
       },
     };
 
