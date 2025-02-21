@@ -51,14 +51,28 @@ export function ChatView({ template, initialInput }: ChatViewProps) {
         body: JSON.stringify({
           model: preferences.modelName,
           messages: [{ role: "user", content: prompt }],
+          temperature: 0.7,
+          max_tokens: 2000,
         }),
       });
       
       if (!response.ok) {
-        throw new Error(`API request failed with status ${response.status}`);
+        const errorData = await response.text();
+        console.error("API Error Response:", {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorData
+        });
+        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json() as APIResponse;
+      
+      if (!data.choices?.[0]?.message?.content) {
+        console.error("Invalid API Response:", data);
+        throw new Error("Invalid API response format");
+      }
+
       setMessages([...newMessages, { 
         role: "assistant", 
         content: data.choices[0].message.content 
@@ -68,9 +82,13 @@ export function ChatView({ template, initialInput }: ChatViewProps) {
       console.error("API request failed:", error);
       setMessages([...newMessages, { 
         role: "assistant", 
-        content: "Error: Failed to get response from AI. Please check your API settings." 
+        content: `Error: Failed to get response from AI. Please check your API settings.\n\nDetails: ${error.message}` 
       }]);
-      await showToast({ title: "AI 请求失败", style: Toast.Style.Failure });
+      await showToast({ 
+        title: "AI 请求失败", 
+        style: Toast.Style.Failure,
+        message: error.message 
+      });
     } finally {
       setIsLoading(false);
     }
@@ -83,20 +101,20 @@ export function ChatView({ template, initialInput }: ChatViewProps) {
           <Action.SubmitForm
             title="Send"
             onSubmit={handleSubmit}
-            disabled={isLoading}
           />
         </ActionPanel>
       }
+      navigationTitle={`Using Template: ${template.name}`}
     >
-      <Form.TextArea
+      <Form.TextField
         id="input"
-        title={`Using Template: ${template.name}`}
+        title="Input"
         placeholder="Enter your content here..."
         value={input}
         onChange={setInput}
         autoFocus
-        disabled={isLoading}
       />
+      <Form.Separator />
       {messages.map((message, index) => (
         message.role === "user" ? (
           <Form.Description
@@ -110,8 +128,7 @@ export function ChatView({ template, initialInput }: ChatViewProps) {
             id={`message-${index}`}
             title="AI Response"
             defaultValue={message.content}
-            readOnly
-            autoHeight
+            enableMarkdown
           />
         )
       ))}
