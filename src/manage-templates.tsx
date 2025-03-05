@@ -84,11 +84,12 @@ export default function Command() {
           subtitle={`Used: ${template.useCount || 0} times`}
           actions={
             <ActionPanel>
-              <Action title="Use" onAction={() => handleTemplateSelect(template)} />
               <Action.Push
                 title="Edit"
                 target={<TemplateForm template={template} onSave={loadTemplates} />}
+                shortcut={{ modifiers: [], key: "return" }}
               />
+              <Action title="Use" onAction={() => handleTemplateSelect(template)} />
               <Action
                 title="Delete"
                 style={Action.Style.Destructive}
