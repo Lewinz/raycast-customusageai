@@ -2,51 +2,81 @@
   "name": "custom-usage-ai",
   "title": "CustomUsageAI",
   "description": "A Raycast extension for custom AI model interactions",
-  "icon": "command-icon.png",
-  "author": "你的名字",
-  "categories": ["Productivity", "Developer Tools"],
+  "icon": "icons/use-template.png",
+  "author": "lewin",
+  "categories": [
+    "AI",
+    "Chat"
+  ],
   "license": "MIT",
   "commands": [
     {
       "name": "manage-templates",
       "title": "Manage Templates",
       "description": "Create, edit, and delete prompt templates. Templates can be sorted by usage count and support variables.",
-      "mode": "view"
+      "mode": "view",
+      "icon": "icons/manage-templates.png"
     },
     {
       "name": "use-template",
-      "title": "Use Template",
-      "description": "Quick access to your templates. Search, select and use templates with AI. Supports continuous conversations.",
-      "mode": "view"
+      "title": "Use Template (Empty)",
+      "description": "Use template with empty input. Start a new conversation with AI.",
+      "mode": "view",
+      "icon": "icons/use-template.png"
     },
     {
       "name": "use-with-clipboard",
-      "title": "Use Template with Clipboard",
+      "title": "Use Template (Clipboard)",
       "description": "Use template with current clipboard content. Quick way to process copied text with AI.",
-      "mode": "view"
+      "mode": "view",
+      "icon": "icons/use-with-clipboard.png"
     }
   ],
   "preferences": [
     {
+      "name": "provider",
+      "type": "dropdown",
+      "required": true,
+      "title": "AI Provider",
+      "description": "Select your AI service provider",
+      "data": [
+        {
+          "title": "OpenAI",
+          "value": "openai"
+        },
+        {
+          "title": "Qianwen",
+          "value": "qianwen"
+        },
+        {
+          "title": "Custom",
+          "value": "custom"
+        }
+      ],
+      "default": "openai"
+    },
+    {
       "name": "apiHost",
-      "title": "API Host",
-      "description": "Custom API host for OpenAI compatible API",
       "type": "textfield",
-      "required": true
+      "required": true,
+      "title": "API Host",
+      "description": "API endpoint URL\n\nExamples:\n- OpenAI: https://api.openai.com/v1\n- Qianwen: https://dashscope.aliyuncs.com/api/v1",
+      "default": "https://api.openai.com/v1"
     },
     {
       "name": "modelName",
-      "title": "Model Name",
-      "description": "Name of the AI model to use",
       "type": "textfield",
-      "required": true
+      "required": true,
+      "title": "Model Name",
+      "description": "Name of the AI model to use\n\nExamples:\n- OpenAI: gpt-3.5-turbo\n- Qianwen: qwen-max-latest",
+      "default": "gpt-3.5-turbo"
     },
     {
       "name": "apiKey",
-      "title": "API Key",
-      "description": "API key for authentication",
       "type": "password",
-      "required": true
+      "required": true,
+      "title": "API Key",
+      "description": "API authentication key\n\nExamples:\n- OpenAI: sk-...\n- Qianwen: sk-..."
     }
   ],
   "dependencies": {
@@ -63,7 +93,7 @@
     "eslint": "^7.32.0",
     "eslint-config-prettier": "^8.3.0",
     "prettier": "^2.5.1",
-    "typescript": "^4.4.3"
+    "typescript": "^4.9.5"
   },
   "scripts": {
     "build": "ray build -e dist",
@@ -73,4 +103,4 @@
     "publish": "npx @raycast/api@latest publish",
     "update-commands": "ts-node scripts/update-commands.ts"
   }
-} 
+}

@@ -8,11 +8,25 @@
 /* eslint-disable @typescript-eslint/ban-types */
 
 type ExtensionPreferences = {
-  /** API Host - Custom API host for OpenAI compatible API */
+  /** AI Provider - Select your AI service provider */
+  "provider": "openai" | "qianwen" | "custom",
+  /** API Host - API endpoint URL
+
+Examples:
+- OpenAI: https://api.openai.com/v1
+- Qianwen: https://dashscope.aliyuncs.com/api/v1 */
   "apiHost": string,
-  /** Model Name - Name of the AI model to use */
+  /** Model Name - Name of the AI model to use
+
+Examples:
+- OpenAI: gpt-3.5-turbo
+- Qianwen: qwen-max-latest */
   "modelName": string,
-  /** API Key - API key for authentication */
+  /** API Key - API authentication key
+
+Examples:
+- OpenAI: sk-...
+- Qianwen: sk-... */
   "apiKey": string
 }
 

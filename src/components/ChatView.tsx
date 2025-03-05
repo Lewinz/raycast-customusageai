@@ -1,8 +1,7 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Form, ActionPanel, Action, getPreferenceValues, LocalStorage, showToast, Toast } from "@raycast/api";
-import { useState } from "react";
 import fetch from "node-fetch";
-import { Template, ChatMessage, Preferences, APIResponse } from "../types";
+import { Template, ChatMessage, Preferences, APIResponse, APIConfig, API_PROVIDERS } from "../types";
 
 interface ChatViewProps {
   template: Template;
@@ -42,18 +41,27 @@ export function ChatView({ template, initialInput }: ChatViewProps) {
     setInput("");
     
     try {
-      const response = await fetch(`${preferences.apiHost}/chat/completions`, {
+      const provider = preferences.provider;
+      const apiConfig = API_PROVIDERS[provider];
+      const endpoint = apiConfig.endpoint(preferences.apiHost);
+      const headers = apiConfig.headers(preferences.apiKey);
+      const requestBody = apiConfig.requestBody(
+        [{ role: "user", content: prompt }],
+        preferences.modelName
+      );
+
+      console.log("API Request Details:", {
+        provider,
+        endpoint,
+        headers,
+        requestBody,
+        fullUrl: endpoint
+      });
+      
+      const response = await fetch(endpoint, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${preferences.apiKey}`,
-        },
-        body: JSON.stringify({
-          model: preferences.modelName,
-          messages: [{ role: "user", content: prompt }],
-          temperature: 0.7,
-          max_tokens: 2000,
-        }),
+        headers,
+        body: JSON.stringify(requestBody),
       });
       
       if (!response.ok) {
@@ -66,28 +74,55 @@ export function ChatView({ template, initialInput }: ChatViewProps) {
         throw new Error(`API request failed: ${response.status} ${response.statusText}`);
       }
 
-      const data = await response.json() as APIResponse;
-      
-      if (!data.choices?.[0]?.message?.content) {
+      const data = await response.json() as any;
+      let aiResponse: string;
+
+      // 处理不同服务商的响应格式
+      switch (provider) {
+        case "qianwen":
+          aiResponse = data.output.text;
+          break;
+        case "openai":
+          aiResponse = data.choices[0].message.content;
+          break;
+        default:
+          aiResponse = data.choices?.[0]?.message?.content || data.output?.text || data.response;
+      }
+
+      if (!aiResponse) {
         console.error("Invalid API Response:", data);
         throw new Error("Invalid API response format");
       }
 
       setMessages([...newMessages, { 
         role: "assistant", 
-        content: data.choices[0].message.content 
+        content: aiResponse
       }]);
       await showToast({ title: "AI 响应成功", style: Toast.Style.Success });
     } catch (error) {
       console.error("API request failed:", error);
+      let errorMessage = "Failed to get response from AI. Please check your settings:\n\n";
+      
+      if (error.message.includes("404")) {
+        errorMessage += "• API host URL might be incorrect\n";
+      } else if (error.message.includes("401") || error.message.includes("403")) {
+        errorMessage += "• API key might be invalid or expired\n";
+      } else if (error.message.includes("model")) {
+        errorMessage += "• Model name might be incorrect\n";
+      } else {
+        errorMessage += `• Error details: ${error.message}\n`;
+      }
+      
+      errorMessage += "\nPlease check your extension settings in Raycast.";
+      
       setMessages([...newMessages, { 
         role: "assistant", 
-        content: `Error: Failed to get response from AI. Please check your API settings.\n\nDetails: ${error.message}` 
+        content: errorMessage
       }]);
       await showToast({ 
-        title: "AI 请求失败", 
+        title: "AI Request Failed", 
         style: Toast.Style.Failure,
-        message: error.message 
+        message: "Check your settings" 
       });
     } finally {
       setIsLoading(false);

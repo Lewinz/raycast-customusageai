@@ -93,7 +93,7 @@ export default function Command() {
                 title="Delete"
                 style={Action.Style.Destructive}
                 onAction={() => handleDeleteTemplate(template)}
-                shortcut={{ modifiers: ["cmd"], key: "delete" }}
+                shortcut={{ modifiers: ["cmd"], key: "backspace" }}
               />
             </ActionPanel>
           }
